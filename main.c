@@ -1,26 +1,58 @@
+#include <ctype.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #define BYTES_PER_LINE 16
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+size_t byte_count = 0;
+
 void hexdump(void *p, size_t len) {
   unsigned char *buf = (unsigned char*) p;
+  size_t cycle_count = 0;
 
-  for (int i = 0; i < len; ++i) {
+  for (size_t i = 0; i < len; ++i) {
     if (i % BYTES_PER_LINE == 0) {
-      printf("\n");
+      printf("%08lx  ", byte_count);
     }
-
-    // if (i % (BYTES_PER_LINE / 2) == 0) {
-    //   printf(" ");
-    // }
     printf("%02X ", buf[i]);
+    if ((i+1) % 8 == 0 && (i+1) % 16 != 0) {
+      printf(" ");
+    }
+    ++byte_count;
+
+    if ((i+1) % BYTES_PER_LINE == 0 || i == len - 1) {
+      if (i == len - 1) {
+        size_t padding = BYTES_PER_LINE - (len % BYTES_PER_LINE);
+        padding %= BYTES_PER_LINE;
+        for (size_t j = 0; j < padding; ++j) {
+          printf("   ");
+        }
+      }
+
+      printf(" |");
+
+      if (i == len -1) {
+        for (size_t j = cycle_count * BYTES_PER_LINE; j < len; ++j) {
+          char c = isprint(buf[j]) ? buf[j] : '.';
+          printf("%c", c);
+        }
+      } else {
+        for (size_t j = cycle_count * BYTES_PER_LINE; j < cycle_count * BYTES_PER_LINE + BYTES_PER_LINE; ++j) {
+          char c = isprint(buf[j]) ? buf[j] : '.';
+          printf("%c", c);
+        }
+      }
+
+      printf("|\n");
+      ++cycle_count;
+    }
   }
 }
 
 int main(void) {
-  FILE *fp = fopen("text", "r");
+  FILE *fp = fopen("main.c", "r");
   if (fp == NULL) {
     perror("fopen");
     exit(EXIT_FAILURE);
@@ -29,19 +61,14 @@ int main(void) {
   unsigned char buf[32];
   size_t nread;
 
-  int j = 0;
   while (1) {
     nread = fread(buf, sizeof(*buf), ARRAY_SIZE(buf), fp);
     if (nread == 0) {
       break;
     }
     hexdump(buf, nread);
-
-    // printf("\n\nCICLO N°: %d\n\n", j++);
   }
-
-  // int a = 255;
-  // printf("%02X\n", a);
+  printf("%08lx\n", byte_count);
 
   fclose(fp);
   exit(EXIT_SUCCESS);
