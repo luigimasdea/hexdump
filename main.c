@@ -52,24 +52,25 @@ void hexdump(void *p, size_t len) {
   }
 }
 
-int main(void) {
-  int fd = open("main.c", O_RDONLY);
+int main(int argc, char **argv) {
+  if (argc != 2) {
+    perror("Invalid argument");
+    exit(EXIT_FAILURE);
+  }
+
+  char *path = argv[1];
+
+  int fd = open(path, O_RDONLY);
   if (fd < 0) {
     perror("Unable to open the file");
     exit(EXIT_FAILURE);
   }
-  // FILE *fp = fopen("main.c", "r");
-  // if (fp == NULL) {
-  //   perror("fopen");
-  //   exit(EXIT_FAILURE);
-  // }
 
   unsigned char buf[32];
   ssize_t nread;
 
   while (1) {
     nread = read(fd, buf, sizeof(*buf) * ARRAY_SIZE(buf));
-    // nread = fread(buf, sizeof(*buf), ARRAY_SIZE(buf), fp);    if (nread == 0) {
     if (nread < 0) {
       perror("Read error");
       exit(EXIT_FAILURE);
@@ -82,6 +83,5 @@ int main(void) {
   printf("%08lx\n", byte_count);
 
   close(fd);
-  // fclose(fp);
   exit(EXIT_SUCCESS);
 }
