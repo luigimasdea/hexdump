@@ -1,7 +1,8 @@
 #include <ctype.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #define BYTES_PER_LINE 16
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -52,17 +53,27 @@ void hexdump(void *p, size_t len) {
 }
 
 int main(void) {
-  FILE *fp = fopen("main.c", "r");
-  if (fp == NULL) {
-    perror("fopen");
+  int fd = open("main.c", O_RDONLY);
+  if (fd < 0) {
+    perror("Unable to open the file");
     exit(EXIT_FAILURE);
   }
+  // FILE *fp = fopen("main.c", "r");
+  // if (fp == NULL) {
+  //   perror("fopen");
+  //   exit(EXIT_FAILURE);
+  // }
 
   unsigned char buf[32];
-  size_t nread;
+  ssize_t nread;
 
   while (1) {
-    nread = fread(buf, sizeof(*buf), ARRAY_SIZE(buf), fp);
+    nread = read(fd, buf, sizeof(*buf) * ARRAY_SIZE(buf));
+    // nread = fread(buf, sizeof(*buf), ARRAY_SIZE(buf), fp);    if (nread == 0) {
+    if (nread < 0) {
+      perror("Read error");
+      exit(EXIT_FAILURE);
+    }
     if (nread == 0) {
       break;
     }
@@ -70,6 +81,7 @@ int main(void) {
   }
   printf("%08lx\n", byte_count);
 
-  fclose(fp);
+  close(fd);
+  // fclose(fp);
   exit(EXIT_SUCCESS);
 }
