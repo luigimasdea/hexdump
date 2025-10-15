@@ -1,9 +1,8 @@
-# Nome del tuo programma eseguibile
 TARGET = main
 SRC = main.c
 CC = gcc
 
-CFLAGS = -O3 -Wall -Wextra
+CFLAGS = -O3 -W -Wall -Wextra
 
 all: $(TARGET)
 

@@ -5,7 +5,6 @@
 #include <fcntl.h>
 
 #define BYTES_PER_LINE 16
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 size_t byte_count = 0;
 
@@ -18,7 +17,7 @@ void hexdump(void *p, size_t len) {
       printf("%08lx  ", byte_count);
     }
     printf("%02X ", buf[i]);
-    if ((i+1) % 8 == 0 && (i+1) % 16 != 0) {
+    if ((i+1) % (BYTES_PER_LINE/2) == 0 && (i+1) % BYTES_PER_LINE != 0) {
       printf(" ");
     }
     ++byte_count;
@@ -29,6 +28,9 @@ void hexdump(void *p, size_t len) {
         padding %= BYTES_PER_LINE;
         for (size_t j = 0; j < padding; ++j) {
           printf("   ");
+        }
+        if (i % BYTES_PER_LINE < (BYTES_PER_LINE/2 - 1)) {
+          printf(" ");
         }
       }
 
@@ -70,7 +72,7 @@ int main(int argc, char **argv) {
   ssize_t nread;
 
   while (1) {
-    nread = read(fd, buf, sizeof(*buf) * ARRAY_SIZE(buf));
+    nread = read(fd, buf, sizeof(buf));
     if (nread < 0) {
       perror("Read error");
       exit(EXIT_FAILURE);
@@ -78,7 +80,7 @@ int main(int argc, char **argv) {
     if (nread == 0) {
       break;
     }
-    hexdump(buf, nread);
+    hexdump(buf, (size_t) nread);
   }
   printf("%08lx\n", byte_count);
 
